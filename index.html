@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>オリキャラ 資料アーカイブ (data/ 検知)</title>
+<title>オリキャラ 資料アーカイブ (リポジトリ data/ 自動検知)</title>
 <style>
   :root {
     --bg: #f1f5f9;
@@ -50,24 +50,26 @@
     flex-wrap: wrap;
   }
   .btn-folder {
-    background: var(--primary);
-    color: #fff;
-    padding: 10px 18px;
+    background: #f8fafc;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 9px 14px;
     border-radius: 8px;
     font-weight: bold;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    border: none;
-    font-size: 0.95rem;
+    gap: 6px;
+    font-size: 0.88rem;
+    transition: background 0.15s;
   }
-  .btn-folder:hover { background: #2563eb; }
+  .btn-folder:hover { background: #e2e8f0; }
   input[type="text"] {
     padding: 9px 12px;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 0.95rem;
+    min-width: 240px;
   }
   main {
     max-width: 1100px;
@@ -82,6 +84,26 @@
     text-align: center;
     color: var(--sub);
   }
+  .repo-config {
+    margin-top: 16px;
+    display: inline-flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .repo-config input {
+    min-width: 180px;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .btn-primary:hover { background: #2563eb; }
   .char-section {
     background: var(--card);
     border-radius: 12px;
@@ -110,6 +132,7 @@
   .badges {
     display: flex;
     gap: 6px;
+    flex-wrap: wrap;
   }
   .badge {
     display: inline-flex;
@@ -140,7 +163,6 @@
     align-items: center;
     gap: 6px;
   }
-  /* 画像ギャラリー */
   .img-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -153,8 +175,9 @@
     border-radius: 8px;
     border: 1px solid var(--border);
     cursor: pointer;
+    transition: transform 0.15s;
   }
-  /* テキスト */
+  .img-list img:hover { transform: scale(1.03); }
   .txt-box {
     background: #f8fafc;
     border: 1px solid var(--border);
@@ -171,7 +194,6 @@
     margin-bottom: 4px;
     font-weight: bold;
   }
-  /* 音声 */
   .audio-item {
     background: #faf5ff;
     border: 1px solid #e9d5ff;
@@ -184,7 +206,6 @@
     height: 36px;
     margin-top: 6px;
   }
-  /* 日々ログ (?log) */
   .log-box {
     background: var(--log-bg);
     border-left: 4px solid var(--log-border);
@@ -195,6 +216,30 @@
     white-space: pre-wrap;
     line-height: 1.6;
   }
+  .log-header {
+    font-weight: bold;
+    color: #92400e;
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+  }
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    cursor: zoom-out;
+  }
+  .modal.active { display: flex; }
+  .modal img {
+    max-width: 95%;
+    max-height: 92vh;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+  }
   svg { width: 16px; height: 16px; flex-shrink: 0; }
 </style>
 </head>
@@ -202,7 +247,6 @@
 
 <header>
   <h1>
-    <!-- フォルダSVG -->
     <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" style="width:24px;height:24px;">
       <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
     </svg>
@@ -210,11 +254,11 @@
   </h1>
   <div class="controls">
     <input type="text" id="searchBox" placeholder="キャラ名・テキスト・ログ検索...">
-    <label class="btn-folder">
+    <label class="btn-folder" title="ローカルPCのフォルダから直接読み込む場合">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
       </svg>
-      data/ フォルダを読み込む
+      ローカル読込
       <input type="file" id="folderInput" webkitdirectory directory multiple style="display:none">
     </label>
   </div>
@@ -222,13 +266,22 @@
 
 <main id="mainArea">
   <div class="guide">
-    <p style="font-size:1.1rem; font-weight:bold; color:#334155;">上の「data/ フォルダを読み込む」ボタンからフォルダを選択してください</p>
-    <p>フォルダ内の <b>画像・テキスト・音声</b> と、1行目に <b><code>?log</code></b> が書かれた日々ログファイルを自動判別して表示します。</p>
+    <p>リポジトリ内の <code>data/</code> フォルダを検知しています...</p>
   </div>
 </main>
 
+<div class="modal" id="imgModal" onclick="this.classList.remove('active')">
+  <img id="modalImg" src="" alt="拡大プレビュー">
+</div>
+
 <script>
-  // 分かりやすいSVGアイコン定義
+  // ★ 手動でリポジトリを指定したい場合はここに記入（空欄ならGitHub PagesのURLから自動判別）
+  const REPO_CONFIG = {
+    owner: '',   // 例: 'your-username'
+    repo: '',    // 例: 'oc-archive'
+    branch: ''   // 空欄ならデフォルトブランチ(main/master)を自動取得
+  };
+
   const ICONS = {
     user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>`,
     image: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`,
@@ -237,148 +290,251 @@
     log: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>`
   };
 
+  const IMG_EXTS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'];
+  const AUD_EXTS = ['mp3', 'wav', 'ogg', 'm4a', 'aac'];
+  const TXT_EXTS = ['txt', 'md', 'log', 'csv', 'json'];
+
   let charGroups = {};
+  let objectUrls = [];
 
-  document.getElementById('folderInput').addEventListener('change', async (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 
-    charGroups = {};
+  function openModal(url) {
+    document.getElementById('modalImg').src = url;
+    document.getElementById('imgModal').classList.add('active');
+  }
 
-    for (const file of files) {
-      // パス解析: data/キャラ名/ファイル名 または 選択フォルダ/キャラ名/ファイル名
-      const parts = file.webkitRelativePath.split('/');
-      if (parts.length < 2) continue;
+  // テキスト内容を解析して texts または logs に振り分ける共通関数
+  function classifyTextContent(charName, fileName, rawText) {
+    const lines = rawText.replace(/\r\n/g, '\n').split('\n');
+    const firstLine = (lines || '').trim();
 
-      // data/ 階層を探す（見つからなければルート直下のフォルダ名をキャラ名とする）
-      const dataIdx = parts.indexOf('data');
-      const charName = (dataIdx !== -1 && parts.length > dataIdx + 2)
-        ? parts[dataIdx + 1]
-        : (parts.length >= 3 ? parts[1] : '未分類');
-
-      if (file.name.startsWith('.')) continue; // 隠しファイル除外
-
-      if (!charGroups[charName]) {
-        charGroups[charName] = { images: [], texts: [], audios: [], logs: [] };
-      }
-
-      const ext = file.name.split('.').pop().toLowerCase();
-
-      // 1. 画像検知
-      if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext)) {
-        charGroups[charName].images.push({
-          name: file.name,
-          url: URL.createObjectURL(file)
-        });
-      }
-      // 2. 音声検知
-      else if (['mp3', 'wav', 'ogg', 'm4a', 'aac'].includes(ext)) {
-        charGroups[charName].audios.push({
-          name: file.name,
-          url: URL.createObjectURL(file)
-        });
-      }
-      // 3. テキスト & ?log 検知
-      else if (['txt', 'md', 'log', 'csv', 'json'].includes(ext)) {
-        const rawText = await file.text();
-        const lines = rawText.replace(/\r\n/g, '\n').split('\n');
-        const firstLine = lines.trim();
-
-        if (firstLine === '?log' || firstLine.startsWith('?log ')) {
-          // 1行目が ?log の場合は「日々ログ」として分類（1行目を除いた本文を格納）
-          const body = lines.slice(1).join('\n').trim();
-          charGroups[charName].logs.push({
-            name: file.name,
-            header: firstLine.replace(/^\?log\s*/, ''),
-            content: body
-          });
-        } else {
-          charGroups[charName].texts.push({
-            name: file.name,
-            content: rawText
-          });
-        }
-      }
+    if (firstLine === '?log' || firstLine.startsWith('?log ')) {
+      const body = lines.slice(1).join('\n').trim();
+      charGroups[charName].logs.push({
+        name: fileName,
+        header: firstLine.replace(/^\?log\s*/, ''),
+        body
+      });
+    } else {
+      charGroups[charName].texts.push({
+        name: fileName,
+        body: rawText.trim()
+      });
     }
+  }
 
-    renderAll();
-  });
+  // URLからGitHubオーナー・リポジトリ名を自動検出
+  function detectGitHubRepo() {
+    if (REPO_CONFIG.owner && REPO_CONFIG.repo) {
+      return { owner: REPO_CONFIG.owner, repo: REPO_CONFIG.repo, branch: REPO_CONFIG.branch };
+    }
+    const host = window.location.hostname;
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    if (host.endsWith('.github.io')) {
+      const owner = host.replace('.github.io', '');
+      const repo = pathParts.length > 0 ? pathParts : `${owner}.github.io`;
+      return { owner, repo, branch: REPO_CONFIG.branch };
+    }
+    return null;
+  }
 
-  document.getElementById('searchBox').addEventListener('input', renderAll);
-
-  function renderAll() {
+  // GitHubリポジトリ内の data/ を一括スキャンして読み込み
+  async function loadFromGitHub(owner, repo, branchInput = '') {
     const main = document.getElementById('mainArea');
-    const query = document.getElementById('searchBox').value.toLowerCase().trim();
-    const names = Object.keys(charGroups).sort();
+    main.innerHTML = `<div class="guide"><p>リポジトリ <b>${escapeHtml(owner)}/${escapeHtml(repo)}</b> の <code>data/</code> を読み込み中...</p></div>`;
 
-    if (names.length === 0) {
-      main.innerHTML = `<div class="guide">有効なキャラクターデータが見つかりませんでした。</div>`;
-      return;
-    }
+    try {
+      let branch = branchInput;
+      if (!branch) {
+        const repoRes = await fetch(`https://github.com{owner}/${repo}`);
+        if (!repoRes.ok) throw new Error('リポジトリ情報の取得に失敗しました（非公開リポジトリか存在しません）');
+        const repoData = await repoRes.json();
+        branch = repoData.default_branch || 'main';
+      }
 
-    main.innerHTML = '';
-
-    for (const name of names) {
-      const data = charGroups[name];
-
-      // 検索フィルタリング
-      const allText = [
-        name,
-        ...data.texts.map(t => t.content),
-        ...data.logs.map(l => l.header + ' ' + l.content)
-      ].join(' ').toLowerCase();
-
-      if (query && !allText.includes(query)) continue;
-
-      const section = document.createElement('section');
-      section.className = 'char-section';
-
-      // バッジ生成
-      const badgesHtml = `
-        ${data.images.length ? `<span class="badge b-img">${ICONS.image} 画像 ${data.images.length}</span>` : ''}
-        ${data.texts.length ? `<span class="badge b-txt">${ICONS.text} テキスト ${data.texts.length}</span>` : ''}
-        ${data.audios.length ? `<span class="badge b-aud">${ICONS.audio} 音声 ${data.audios.length}</span>` : ''}
-        ${data.logs.length ? `<span class="badge b-log">${ICONS.log} 日々ログ ${data.logs.length}</span>` : ''}
-      `;
-
-      // 画像ブロック
-      const imgHtml = data.images.length ? `
-        <div>
-          <div class="block-title">${ICONS.image} 画像・立ち絵</div>
-          <div class="img-list">
+      // リポジトリ全体のファイルツリーを取得
 コードは注意してご使用ください。
-${data.images.map(img => <img src="${img.url}" title="${esc(img.name)}" onclick="window.open('${img.url}')">).join('')}
-
-` : '';
-// テキストブロック
-const txtHtml = data.texts.length ? <div> <div class="block-title">${ICONS.text} 設定テキスト</div> ${data.texts.map(t =>
-
-${esc(t.name)}
-${esc(t.content)}
-
-).join('')} </div> : '';
-// 音声ブロック
-const audHtml = data.audios.length ? <div> <div class="block-title">${ICONS.audio} ボイス・音声</div> ${data.audios.map(a =>
-
-${esc(a.name)}
-).join('')} </div> : '';
-// ?log（日々ログ）ブロック
-const logHtml = data.logs.length ? <div> <div class="block-title">${ICONS.log} 日々の記録 (?log)</div> ${data.logs.map(l =>
-
-${esc(l.name)} ${l.header ? — ${esc(l.header)} : ''}
-${esc(l.content)}
-
-).join('')} </div> : '';
-section.innerHTML = <div class="char-header"> <div class="char-name">${ICONS.user} ${esc(name)}</div> <div class="badges">${badgesHtml}</div> </div> <div class="char-content"> ${imgHtml} ${txtHtml} ${audHtml} ${logHtml} </div>;
-main.appendChild(section);
+const treeRes = await fetch(https://github.com{owner}/${repo}/git/trees/${branch}?recursive=1);
+if (!treeRes.ok) throw new Error('ファイル一覧の取得に失敗しました');
+const treeData = await treeRes.json();
+// data/ 配下のファイル(blob)のみ抽出
+const dataFiles = (treeData.tree || []).filter(item =>
+item.type === 'blob' && item.path.startsWith('data/')
+);
+if (dataFiles.length === 0) {
+main.innerHTML = <div class="guide"><p>リポジトリ内に <code>data/</code> フォルダ、またはファイルが見つかりませんでした。</p></div>;
+return;
+}
+charGroups = {};
+const textTasks = [];
+for (const item of dataFiles) {
+// パス例: data/キャラ名/サブフォルダ/ファイル名
+const parts = item.path.split('/');
+const fileName = parts[parts.length - 1];
+if (fileName.startsWith('.')) continue;
+const charName = parts.length >= 3 ? parts : '未分類';
+if (!charGroups[charName]) {
+charGroups[charName] = { images: [], texts: [], audios: [], logs: [] };
+}
+const ext = fileName.split('.').pop().toLowerCase();
+// 日本語ファイル名にも対応したRaw URL生成
+const encodedPath = parts.map(encodeURIComponent).join('/');
+const rawUrl = https://githubusercontent.com{owner}/${repo}/${branch}/${encodedPath};
+if (IMG_EXTS.includes(ext)) {
+charGroups[charName].images.push({ name: fileName, url: rawUrl });
+} else if (AUD_EXTS.includes(ext)) {
+charGroups[charName].audios.push({ name: fileName, url: rawUrl });
+} else if (TXT_EXTS.includes(ext)) {
+textTasks.push(
+fetch(rawUrl)
+.then(r => r.text())
+.then(txt => classifyTextContent(charName, fileName, txt))
+);
 }
 }
-function esc(str) {
-return (str || '').replace(/[&<>"']/g, m => ({
-'&': '&', '<': '<', '>': '>', '"': '"', "'": '''
-}[m]));
+await Promise.all(textTasks);
+render(document.getElementById('searchBox').value);
+} catch (err) {
+showManualRepoForm(自動検知できませんでした: ${err.message});
 }
+}
+// 自動判別できない環境（ローカルfile://閲覧など）用の入力フォーム表示
+function showManualRepoForm(message) {
+const main = document.getElementById('mainArea');
+main.innerHTML = `
+${escapeHtml(message)}
+GitHubの公開リポジトリを指定して data/ を読み込むか、右上の「ローカル読込」からフォルダを選択してください。
+リポジトリ読込
+
+
+`;
+}
+function manualLoadRepo() {
+const owner = document.getElementById('inputOwner').value.trim();
+const repo = document.getElementById('inputRepo').value.trim();
+if (owner && repo) {
+loadFromGitHub(owner, repo);
+}
+}
+// ローカルフォルダ選択からの読み込み（フォールバック兼テスト用）
+document.getElementById('folderInput').addEventListener('change', async (e) => {
+const files = Array.from(e.target.files);
+if (!files.length) return;
+objectUrls.forEach(url => URL.revokeObjectURL(url));
+objectUrls = [];
+charGroups = {};
+for (const file of files) {
+const parts = file.webkitRelativePath.split('/');
+if (parts.length < 2) continue;
+const dataIdx = parts.indexOf('data');
+const charName = (dataIdx !== -1 && parts.length > dataIdx + 2)
+? parts[dataIdx + 1]
+: (parts.length >= 3 ? parts : '未分類');
+if (file.name.startsWith('.')) continue;
+if (!charGroups[charName]) {
+charGroups[charName] = { images: [], texts: [], audios: [], logs: [] };
+}
+const ext = file.name.split('.').pop().toLowerCase();
+if (IMG_EXTS.includes(ext)) {
+const url = URL.createObjectURL(file);
+objectUrls.push(url);
+charGroups[charName].images.push({ name: file.name, url });
+} else if (AUD_EXTS.includes(ext)) {
+const url = URL.createObjectURL(file);
+objectUrls.push(url);
+charGroups[charName].audios.push({ name: file.name, url });
+} else if (TXT_EXTS.includes(ext)) {
+const rawText = await file.text();
+classifyTextContent(charName, file.name, rawText);
+}
+}
+render(document.getElementById('searchBox').value);
+});
+document.getElementById('searchBox').addEventListener('input', (e) => {
+render(e.target.value);
+});
+function render(query = '') {
+const main = document.getElementById('mainArea');
+const q = query.trim().toLowerCase();
+const charNames = Object.keys(charGroups).sort((a, b) => a.localeCompare(b, 'ja'));
+if (charNames.length === 0) {
+main.innerHTML = <div class="guide"><p>対応するファイルが見つかりませんでした。</p></div>;
+return;
+}
+let html = '';
+let visibleCount = 0;
+for (const name of charNames) {
+const group = charGroups[name];
+const nameMatch = name.toLowerCase().includes(q);
+const images = nameMatch ? group.images : group.images.filter(i => i.name.toLowerCase().includes(q));
+const audios = nameMatch ? group.audios : group.audios.filter(a => a.name.toLowerCase().includes(q));
+const texts = nameMatch ? group.texts : group.texts.filter(t =>
+t.name.toLowerCase().includes(q) || t.body.toLowerCase().includes(q)
+);
+const logs = nameMatch ? group.logs : group.logs.filter(l =>
+l.name.toLowerCase().includes(q) || l.header.toLowerCase().includes(q) || l.body.toLowerCase().includes(q)
+);
+if (!images.length && !texts.length && !audios.length && !logs.length) continue;
+visibleCount++;
+html += `
+${ICONS.user} ${escapeHtml(name)}
+
+${images.length ? <span class="badge b-img">${ICONS.image} 画像 ${images.length}</span> : ''}
+${texts.length ? <span class="badge b-txt">${ICONS.text} テキスト ${texts.length}</span> : ''}
+${audios.length ? <span class="badge b-aud">${ICONS.audio} 音声 ${audios.length}</span> : ''}
+${logs.length ? <span class="badge b-log">${ICONS.log} ログ ${logs.length}</span> : ''}
 
 
 
-#
+`;
+if (images.length) {
+html += <div> <div class="block-title">${ICONS.image} 画像資料</div> <div class="img-list"> ${images.map(img =>).join('')} </div> </div> ;
+}
+if (texts.length) {
+html += <div> <div class="block-title">${ICONS.text} 設定・テキスト</div> ${texts.map(t =>
+
+${escapeHtml(t.name)}
+${escapeHtml(t.body)}
+
+).join('')} </div> ;
+}
+if (logs.length) {
+html += <div> <div class="block-title">${ICONS.log} 日々ログ (?log)</div> ${logs.map(l =>
+
+${escapeHtml(l.name)}
+${l.header ? <div class="log-header">${escapeHtml(l.header)}</div> : ''}
+${escapeHtml(l.body)}
+
+).join('')} </div> ;
+}
+if (audios.length) {
+html += <div> <div class="block-title">${ICONS.audio} ボイス・音声</div> ${audios.map(a =>
+
+${escapeHtml(a.name)}
+).join('')} </div> ;
+}
+html += </div></section>;
+}
+if (visibleCount === 0) {
+main.innerHTML = <div class="guide"><p>「${escapeHtml(query)}」に一致する資料は見つかりませんでした。</p></div>;
+} else {
+main.innerHTML = html;
+}
+}
+// ページ読み込み時に自動実行
+window.addEventListener('DOMContentLoaded', () => {
+const detected = detectGitHubRepo();
+if (detected) {
+loadFromGitHub(detected.owner, detected.repo, detected.branch);
+} else {
+showManualRepoForm('GitHub Pages以外の環境で開かれています。');
+}
+});
