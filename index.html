@@ -530,11 +530,15 @@ main.innerHTML = html;
 }
 }
 // ページ読み込み時に自動実行
+// ページ読み込み時に自動実行
 window.addEventListener('DOMContentLoaded', () => {
-const detected = detectGitHubRepo();
-if (detected) {
-loadFromGitHub(detected.owner, detected.repo, detected.branch);
-} else {
-showManualRepoForm('GitHub Pages以外の環境で開かれています。');
-}
+  const detected = detectGitHubRepo();
+  if (detected) {
+    loadFromGitHub(detected.owner, detected.repo, detected.branch);
+  } else {
+    showManualRepoForm('GitHub Pages以外の環境で開かれています。');
+  }
 });
+</script>
+</body>
+</html>
