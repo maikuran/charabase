@@ -468,66 +468,7 @@ if (charNames.length === 0) {
 main.innerHTML = '<div class="guide"><p>対応するファイルが見つかりませんでした。</p></div>';
 return;
 }
-let html = '';
-let visibleCount = 0;
-for (const name of charNames) {
-const group = charGroups[name];
-const nameMatch = name.toLowerCase().includes(q);
-const images = nameMatch ? group.images : group.images.filter(i => i.name.toLowerCase().includes(q));
-const audios = nameMatch ? group.audios : group.audios.filter(a => a.name.toLowerCase().includes(q));
-const texts = nameMatch ? group.texts : group.texts.filter(t =>
-t.name.toLowerCase().includes(q) || t.body.toLowerCase().includes(q)
-);
-const logs = nameMatch ? group.logs : group.logs.filter(l =>
-l.name.toLowerCase().includes(q) || l.header.toLowerCase().includes(q) || l.body.toLowerCase().includes(q)
-);
-if (!images.length && !texts.length && !audios.length && !logs.length) continue;
-visibleCount++;
-html += `
-${ICONS.user} ${escapeHtml(name)}
 
-${images.length ? <span class="badge b-img">${ICONS.image} 画像 ${images.length}</span> : ''}
-${texts.length ? <span class="badge b-txt">${ICONS.text} テキスト ${texts.length}</span> : ''}
-${audios.length ? <span class="badge b-aud">${ICONS.audio} 音声 ${audios.length}</span> : ''}
-${logs.length ? <span class="badge b-log">${ICONS.log} ログ ${logs.length}</span> : ''}
-
-
-
-`;
-if (images.length) {
-html += <div> <div class="block-title">${ICONS.image} 画像資料</div> <div class="img-list"> ${images.map(img =>).join('')} </div> </div> ;
-}
-if (texts.length) {
-html += <div> <div class="block-title">${ICONS.text} 設定・テキスト</div> ${texts.map(t =>
-
-${escapeHtml(t.name)}
-${escapeHtml(t.body)}
-
-).join('')} </div> ;
-}
-if (logs.length) {
-html += <div> <div class="block-title">${ICONS.log} 日々ログ (?log)</div> ${logs.map(l =>
-
-${escapeHtml(l.name)}
-${l.header ? <div class="log-header">${escapeHtml(l.header)}</div> : ''}
-${escapeHtml(l.body)}
-
-).join('')} </div> ;
-}
-if (audios.length) {
-html += <div> <div class="block-title">${ICONS.audio} ボイス・音声</div> ${audios.map(a =>
-
-${escapeHtml(a.name)}
-).join('')} </div> ;
-}
-html += </div></section>;
-}
-if (visibleCount === 0) {
-main.innerHTML = <div class="guide"><p>「${escapeHtml(query)}」に一致する資料は見つかりませんでした。</p></div>;
-} else {
-main.innerHTML = html;
-}
-}
 // ページ読み込み時に自動実行
 // ページ読み込み時に自動実行
 window.addEventListener('DOMContentLoaded', () => {
