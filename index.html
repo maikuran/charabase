@@ -402,7 +402,7 @@ fetch(rawUrl)
 await Promise.all(textTasks);
 render(document.getElementById('searchBox').value);
 } catch (err) {
-showManualRepoForm(自動検知できませんでした: ${err.message});
+showManualRepoForm(`自動検知できませんでした: ${err.message}`);
 }
 }
 // 自動判別できない環境（ローカルfile://閲覧など）用の入力フォーム表示
