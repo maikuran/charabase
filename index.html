@@ -369,7 +369,7 @@ const dataFiles = (treeData.tree || []).filter(item =>
 item.type === 'blob' && item.path.startsWith('data/')
 );
 if (dataFiles.length === 0) {
-main.innerHTML = <div class="guide"><p>リポジトリ内に <code>data/</code> フォルダ、またはファイルが見つかりませんでした。</p></div>;
+main.innerHTML = '<div class="guide"><p>リポジトリ内に <code>data/</code> フォルダ、またはファイルが見つかりませんでした。</p></div>';
 return;
 }
 charGroups = {};
