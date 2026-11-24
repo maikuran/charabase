@@ -386,7 +386,7 @@ charGroups[charName] = { images: [], texts: [], audios: [], logs: [] };
 const ext = fileName.split('.').pop().toLowerCase();
 // 日本語ファイル名にも対応したRaw URL生成
 const encodedPath = parts.map(encodeURIComponent).join('/');
-const rawUrl = https://githubusercontent.com{owner}/${repo}/${branch}/${encodedPath};
+const rawUrl = 'https://githubusercontent.com{owner}/${repo}/${branch}/${encodedPath}';
 if (IMG_EXTS.includes(ext)) {
 charGroups[charName].images.push({ name: fileName, url: rawUrl });
 } else if (AUD_EXTS.includes(ext)) {
