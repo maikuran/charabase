@@ -465,7 +465,7 @@ const main = document.getElementById('mainArea');
 const q = query.trim().toLowerCase();
 const charNames = Object.keys(charGroups).sort((a, b) => a.localeCompare(b, 'ja'));
 if (charNames.length === 0) {
-main.innerHTML = <div class="guide"><p>対応するファイルが見つかりませんでした。</p></div>;
+main.innerHTML = '<div class="guide"><p>対応するファイルが見つかりませんでした。</p></div>';
 return;
 }
 let html = '';
