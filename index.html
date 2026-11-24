@@ -361,7 +361,6 @@
       }
 
       // リポジトリ全体のファイルツリーを取得
-コードは注意してご使用ください。
 const treeRes = await fetch(https://github.com{owner}/${repo}/git/trees/${branch}?recursive=1);
 if (!treeRes.ok) throw new Error('ファイル一覧の取得に失敗しました');
 const treeData = await treeRes.json();
