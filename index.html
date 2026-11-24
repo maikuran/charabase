@@ -447,29 +447,132 @@ const url = URL.createObjectURL(file);
 objectUrls.push(url);
 charGroups[charName].images.push({ name: file.name, url });
 } else if (AUD_EXTS.includes(ext)) {
-const url = URL.createObjectURL(file);
-objectUrls.push(url);
-charGroups[charName].audios.push({ name: file.name, url });
-} else if (TXT_EXTS.includes(ext)) {
-const rawText = await file.text();
-classifyTextContent(charName, file.name, rawText);
-}
-}
-render(document.getElementById('searchBox').value);
+      const url = URL.createObjectURL(file);
+      objectUrls.push(url);
+      charGroups[charName].audios.push({ name: file.name, url });
+    } else if (TXT_EXTS.includes(ext)) {
+      const rawText = await file.text();
+      classifyTextContent(charName, file.name, rawText);
+    }
+  }
+  render(document.getElementById('searchBox').value);
 });
+
 document.getElementById('searchBox').addEventListener('input', (e) => {
-render(e.target.value);
+  render(e.target.value);
 });
+
 function render(query = '') {
-const main = document.getElementById('mainArea');
-const q = query.trim().toLowerCase();
-const charNames = Object.keys(charGroups).sort((a, b) => a.localeCompare(b, 'ja'));
-if (charNames.length === 0) {
-main.innerHTML = '<div class="guide"><p>対応するファイルが見つかりませんでした。</p></div>';
-return;
+  const main = document.getElementById('mainArea');
+  const q = query.trim().toLowerCase();
+  const charNames = Object.keys(charGroups).sort((a, b) => a.localeCompare(b, 'ja'));
+
+  if (charNames.length === 0) {
+    main.innerHTML = '<div class="guide"><p>対応するファイルが見つかりませんでした。</p></div>';
+    return;
+  }
+
+  let html = '';
+  let visibleCount = 0;
+
+  for (const name of charNames) {
+    const group = charGroups[name];
+    const nameMatch = name.toLowerCase().includes(q);
+    const images = nameMatch ? group.images : group.images.filter(i => i.name.toLowerCase().includes(q));
+    const audios = nameMatch ? group.audios : group.audios.filter(a => a.name.toLowerCase().includes(q));
+    const texts = nameMatch ? group.texts : group.texts.filter(t =>
+      t.name.toLowerCase().includes(q) || t.body.toLowerCase().includes(q)
+    );
+    const logs = nameMatch ? group.logs : group.logs.filter(l =>
+      l.name.toLowerCase().includes(q) || l.header.toLowerCase().includes(q) || l.body.toLowerCase().includes(q)
+    );
+
+    if (!images.length && !texts.length && !audios.length && !logs.length) continue;
+    visibleCount++;
+
+    html += `
+      <section class="char-section">
+        <div class="char-header">
+          <h2>${ICONS.user} ${escapeHtml(name)}</h2>
+          <div class="badges">
+            ${images.length ? `<span class="badge b-img">${ICONS.image} 画像 ${images.length}</span>` : ''}
+            ${texts.length ? `<span class="badge b-txt">${ICONS.text} テキスト ${texts.length}</span>` : ''}
+            ${audios.length ? `<span class="badge b-aud">${ICONS.audio} 音声 ${audios.length}</span>` : ''}
+            ${logs.length ? `<span class="badge b-log">${ICONS.log} ログ ${logs.length}</span>` : ''}
+          </div>
+        </div>
+        <div class="char-body">
+    `;
+
+    if (images.length) {
+      html += `
+        <div>
+          <div class="block-title">${ICONS.image} 画像資料</div>
+          <div class="img-list">
+            ${images.map(img => `
+              <div class="img-item">
+                <img src="${img.url}" alt="${escapeHtml(img.name)}" loading="lazy">
+                <p>${escapeHtml(img.name)}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    if (texts.length) {
+      html += `
+        <div>
+          <div class="block-title">${ICONS.text} 設定・テキスト</div>
+          ${texts.map(t => `
+            <div class="text-item">
+              <div class="item-title">${escapeHtml(t.name)}</div>
+              <div class="item-body">${escapeHtml(t.body)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    if (logs.length) {
+      html += `
+        <div>
+          <div class="block-title">${ICONS.log} 日々ログ (?log)</div>
+          ${logs.map(l => `
+            <div class="log-item">
+              <div class="item-title">${escapeHtml(l.name)}</div>
+              ${l.header ? `<div class="log-header">${escapeHtml(l.header)}</div>` : ''}
+              <div class="item-body">${escapeHtml(l.body)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    if (audios.length) {
+      html += `
+        <div>
+          <div class="block-title">${ICONS.audio} ボイス・音声</div>
+          ${audios.map(a => `
+            <div class="audio-item">
+              <div class="item-title">${escapeHtml(a.name)}</div>
+              <audio controls src="${a.url}"></audio>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    html += `</div></section>`;
+  }
+
+  if (visibleCount === 0) {
+    main.innerHTML = `<div class="guide"><p>「${escapeHtml(query)}」に一致する資料は見つかりませんでした。</p></div>`;
+  } else {
+    main.innerHTML = html;
+  }
 }
 
-// ページ読み込み時に自動実行
 // ページ読み込み時に自動実行
 window.addEventListener('DOMContentLoaded', () => {
   const detected = detectGitHubRepo();
